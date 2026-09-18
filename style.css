@@ -488,6 +488,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   background: linear-gradient(120deg, var(--green-dark), var(--green) 60%, #0d9c4d);
   color:#fff;
   align-items:center;
+  padding: clamp(70px, 10vh, 110px) 0;
 }
 .join-cta .container{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
 .join-cta h2{
