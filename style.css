@@ -451,7 +451,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   padding: 16px 16px 18px;
   background: linear-gradient(0deg, rgba(11,44,26,0.95) 0%, rgba(11,44,26,0.55) 65%, rgba(11,44,26,0) 100%);
   color:#fff;
-  transform: translateY(62%);
+  transform: translateY(0);
   transition: transform 0.4s cubic-bezier(.4,0,.2,1);
 }
 .team-card:hover .team-card-info,
