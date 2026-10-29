@@ -5,6 +5,8 @@
    so this single file works on every page without errors.
    ========================================================================== */
 
+document.documentElement.classList.add('js');
+
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------------------------- Footer year ---------------------------- */
@@ -28,18 +30,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLinks = document.getElementById('navLinks');
 
   if (hamburger && navLinks) {
-    hamburger.addEventListener('click', () => {
-      const isOpen = navLinks.classList.toggle('open');
+    hamburger.setAttribute('aria-label', 'Open navigation');
+    const setMenuOpen = (isOpen) => {
+      navLinks.classList.toggle('open', isOpen);
       hamburger.classList.toggle('open', isOpen);
       hamburger.setAttribute('aria-expanded', isOpen);
+      hamburger.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+      if (isOpen) navLinks.querySelector('a')?.focus();
+    };
+
+    hamburger.addEventListener('click', () => {
+      setMenuOpen(!navLinks.classList.contains('open'));
     });
 
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
-        navLinks.classList.remove('open');
-        hamburger.classList.remove('open');
-        hamburger.setAttribute('aria-expanded', 'false');
+        setMenuOpen(false);
       });
+    });
+
+    document.addEventListener('click', (event) => {
+      if (navLinks.classList.contains('open') && (!header || !header.contains(event.target))) {
+        setMenuOpen(false);
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && navLinks.classList.contains('open')) {
+        setMenuOpen(false);
+        hamburger.focus();
+      }
     });
   }
 
@@ -63,15 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------------------------- Scroll reveal (IntersectionObserver) ---------------------------- */
   const revealEls = document.querySelectorAll('.reveal');
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.15 });
-  revealEls.forEach(el => revealObserver.observe(el));
+  if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => revealObserver.observe(el));
+  } else {
+    revealEls.forEach(el => el.classList.add('in-view'));
+  }
 
   /* ---------------------------- Leadership carousel (index.html) ---------------------------- */
   const teamTrack = document.getElementById('teamTrack');
@@ -84,8 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (teamDotsWrap) {
       cards.forEach((_, i) => {
-        const dot = document.createElement('span');
+        const dot = document.createElement('button');
+        dot.type = 'button';
         dot.className = 'team-dot';
+        dot.setAttribute('aria-label', `Go to leadership member ${i + 1}`);
+        dot.setAttribute('aria-current', i === 0 ? 'true' : 'false');
         if (i === 0) dot.classList.add('is-active');
         teamDotsWrap.appendChild(dot);
       });
@@ -101,7 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (dots.length) {
         const index = Math.round(teamTrack.scrollLeft / cardStep());
-        dots.forEach((d, i) => d.classList.toggle('is-active', i === Math.min(index, dots.length - 1)));
+        dots.forEach((d, i) => {
+          const isActive = i === Math.min(index, dots.length - 1);
+          d.classList.toggle('is-active', isActive);
+          d.setAttribute('aria-current', String(isActive));
+        });
       }
     };
 
@@ -154,9 +185,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     filterChips.forEach(chip => {
+      chip.setAttribute('aria-pressed', String(chip.classList.contains('is-active')));
       chip.addEventListener('click', () => {
         filterChips.forEach(c => c.classList.remove('is-active'));
         chip.classList.add('is-active');
+        filterChips.forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
         applyFilter(chip.dataset.filter);
       });
     });
@@ -172,6 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightboxNext = document.getElementById('lightboxNext');
 
     let currentIndex = 0;
+    let previouslyFocused = null;
+    let previousBodyOverflow = '';
 
     const categoryLabels = {
       market: 'Market Outreach',
@@ -193,16 +228,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const openLightbox = (tile) => {
+      if (!lightbox || !lightboxImg) return;
       visibleTiles = tiles.filter(t => !t.classList.contains('is-hidden'));
       const index = visibleTiles.indexOf(tile);
       showImage(index === -1 ? 0 : index);
+      previouslyFocused = document.activeElement;
+      previousBodyOverflow = document.body.style.overflow;
       lightbox.classList.add('open');
       document.body.style.overflow = 'hidden';
+      lightboxClose?.focus();
     };
 
     const closeLightbox = () => {
+      if (!lightbox) return;
       lightbox.classList.remove('open');
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousBodyOverflow;
+      previouslyFocused?.focus();
     };
 
     tiles.forEach(tile => {
@@ -222,6 +263,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Escape') closeLightbox();
       if (e.key === 'ArrowRight') showImage(currentIndex + 1);
       if (e.key === 'ArrowLeft') showImage(currentIndex - 1);
+      if (e.key === 'Tab') {
+        const focusable = Array.from(lightbox.querySelectorAll('button:not([disabled])'));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     });
   }
 
@@ -229,6 +282,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const outreachList = document.getElementById('outreachList');
   if (outreachList) {
     outreachList.querySelectorAll('.outreach-toggle').forEach(btn => {
+      const extra = btn.nextElementSibling;
+      if (extra?.classList.contains('outreach-extra')) {
+        if (!extra.id) extra.id = `outreach-details-${Array.from(outreachList.querySelectorAll('.outreach-extra')).indexOf(extra) + 1}`;
+        btn.setAttribute('aria-controls', extra.id);
+      }
       btn.addEventListener('click', () => {
         const card = btn.closest('.outreach-card');
         const isOpen = card.classList.toggle('is-open');

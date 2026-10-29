@@ -121,11 +121,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* ---------------------------------- Reveal on scroll ---------------------------------- */
 .reveal{
+  opacity:1;
+}
+.js .reveal{
   opacity:0;
   transform: translateY(28px);
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
-.reveal.in-view{ opacity:1; transform:none; }
+.js .reveal.in-view{ opacity:1; transform:none; }
 
 /* ---------------------------------- Section labels ---------------------------------- */
 .section-eyebrow{
@@ -226,7 +229,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 .hamburger{
   display:none; flex-direction:column; justify-content:center; gap:5px;
-  width: 34px; height: 34px; z-index: 1100;
+  width: 44px; height: 44px; padding: 9px; z-index: 1100;
 }
 .hamburger span{
   display:block; height:2.5px; width:100%; background:#fff; border-radius:2px;
@@ -476,9 +479,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .team-nav-btn:disabled{ opacity:0.35; cursor:not-allowed; transform:none; box-shadow:var(--shadow-card); background:#fff; color:var(--green-dark); }
 
-.team-dots{ display:flex; gap:8px; }
-.team-dot{ width:8px; height:8px; border-radius:50%; background: rgba(11,138,67,0.25); transition: background var(--transition), transform var(--transition); }
-.team-dot.is-active{ background: var(--green); transform: scale(1.3); }
+.team-dots{ display:flex; gap:2px; }
+.team-dot{
+  width:32px; height:32px; padding:0; border:0; background:transparent;
+  display:grid; place-items:center;
+}
+.team-dot::before{
+  content:''; width:8px; height:8px; border-radius:50%;
+  background: rgba(11,138,67,0.25);
+  transition: background var(--transition), transform var(--transition);
+}
+.team-dot.is-active::before{ background: var(--green); transform: scale(1.3); }
+.team-dot:focus-visible{ outline: 2px solid var(--green); outline-offset: -2px; border-radius:50%; }
 
 /* ==========================================================================
    Join the Movement CTA
@@ -719,14 +731,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 @media (max-width: 760px){
   .hamburger{ display:flex; }
+  .team-nav{ gap:12px; }
+  .team-dots{ max-width:min(52vw, 220px); flex-wrap:wrap; justify-content:center; }
 
   .nav-links{
     position:fixed; top:0; right:0; height:100vh; width: min(78%, 320px);
     background: var(--green-dark); flex-direction:column; align-items:flex-start;
     justify-content:flex-start; gap: 26px; padding: calc(var(--header-h) + 16px) 40px 40px;
-    transform: translateX(100%); transition: transform var(--transition);
+    transform: translateX(100%); visibility:hidden; transition: transform var(--transition), visibility var(--transition);
   }
-  .nav-links.open{ transform: translateX(0); }
+  .nav-links.open{ transform: translateX(0); visibility:visible; }
   .nav-links .nav-link, .nav-links .nav-cta{ color:#fff; font-size:1.1rem; }
   .nav-links .nav-cta{ color: var(--green-dark) !important; }
 
@@ -739,6 +753,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .team-card{ width: 168px; height: 210px; }
 
   .gallery-masonry{ columns: 2 160px; }
+  .gallery-tile-caption{ opacity:1; }
   .outreach-card-body{ padding: 22px; }
 
   .contact-form{ padding: 28px 22px; }
